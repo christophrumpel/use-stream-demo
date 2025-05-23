@@ -1,88 +1,97 @@
-// resources/js/Pages/CodeEditor.tsx
-import { useState } from 'react'
-import Editor from "@monaco-editor/react"
+import { useStream } from '@laravel/stream-react';
+import Editor from '@monaco-editor/react';
+import { useEffect, useState } from 'react';
+
+type Language = 'python' | 'typescript' | 'ruby';
 
 export default function CodeEditor() {
-    const [code, setCode] = useState<string>("<?php\n\n// Start typing your PHP code here...")
+    const [sourceCode, setSourceCode] = useState<string>('<?php\n\nfunction welcome($name) {\n    return "Hello, " . $name;\n}');
+    const [targetLang, setTargetLang] = useState<Language>('python');
+    const { data, send } = useStream('stream');
 
-    // Configure Monaco editor before it loads
-    function handleEditorWillMount(monaco: typeof import('monaco-editor')): void {
-        // PHP Language Configuration
-        monaco.languages.setLanguageConfiguration('php', {});
-    }
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (sourceCode.length > 5) {
+                send({ code: sourceCode, targetLang });
+            }
+        }, 150);
 
-    // Handle editor change with proper typing
-    function handleEditorChange(value: string | undefined): void {
-        if (value !== undefined) {
-            setCode(value);
-        }
-    }
+        return () => clearTimeout(timer);
+    }, [sourceCode, targetLang, send]);
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-                        PHP Smart Code Editor
-                    </h1>
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        Write PHP code with intelligent suggestions
-                    </p>
-                </div>
+        <div className="min-h-screen bg-gray-50 px-4 py-12 dark:bg-gray-900">
+            <div className="mx-auto max-w-7xl">
+                <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">Live Code Translator</h1>
+                <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">Write PHP code, see it translated in real-time</p>
 
-                <div className="rounded-lg overflow-hidden shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                    <div className="h-[600px]">
-                        <Editor
-                            height="100%"
-                            defaultLanguage="php"
-                            theme="vs-dark"
-                            value={code}
-                            onChange={handleEditorChange}
-                            beforeMount={handleEditorWillMount}
-                            options={{
-                                minimap: { enabled: false },
-                                fontSize: 14,
-                                lineNumbers: 'on',
-                                roundedSelection: false,
-                                scrollBeyondLastLine: false,
-                                automaticLayout: true,
-                                padding: { top: 16, bottom: 16 },
-                                tabSize: 4,
-                                insertSpaces: true,
-                                formatOnPaste: true,
-                                formatOnType: true,
-                                autoIndent: 'full',
-                                snippetSuggestions: 'inline',
-                                suggest: {
-                                    showClasses: true,
-                                    showFunctions: true,
-                                    showConstructors: true,
-                                    showDeprecated: false,
-                                    matchOnWordStartOnly: false,
-                                },
-                                quickSuggestions: {
-                                    other: true,
-                                    comments: true,
-                                    strings: true
-                                },
-                            }}
-                        />
+                <div className="mt-12 flex flex-col items-center gap-4 md:flex-row md:items-start md:gap-8">
+                    {/* Source Editor */}
+                    <div className="w-full overflow-hidden rounded-3xl bg-[#1E1E1E] shadow-2xl md:w-1/2">
+                        <div className="h-[200px]">
+                            {' '}
+                            {/* Reduced height */}
+                            <Editor
+                                height="100%"
+                                defaultLanguage="php"
+                                theme="vs-dark"
+                                value={sourceCode}
+                                onChange={(value) => value && setSourceCode(value)}
+                                options={{
+                                    minimap: { enabled: false },
+                                    fontSize: 14,
+                                    lineNumbers: 'on',
+                                    padding: { top: 16, bottom: 16 },
+                                    tabSize: 4,
+                                }}
+                            />
+                        </div>
                     </div>
-                </div>
 
-                {/* Status bar */}
-                <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center space-x-2">
-                        <span className="px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-                            PHP
-                        </span>
+                    {/* Language Selector */}
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="relative">
+                            <select
+                                value={targetLang}
+                                onChange={(e) => setTargetLang(e.target.value as Language)}
+                                className="appearance-none rounded-lg border border-gray-200 bg-white py-2 pr-10 pl-4 text-base shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                style={{ minWidth: '120px' }}
+                            >
+                                <option value="python">Python</option>
+                                <option value="typescript">TypeScript</option>
+                                <option value="ruby">Ruby</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                                <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                        <span>Ready for suggestions</span>
+
+                    {/* Target Editor */}
+                    <div className="w-full overflow-hidden rounded-3xl bg-[#1E1E1E] shadow-2xl md:w-1/2">
+                        <div className="h-[200px]">
+                            {' '}
+                            {/* Reduced height */}
+                            <Editor
+                                height="100%"
+                                defaultLanguage={targetLang}
+                                theme="vs-dark"
+                                value={data || `# Translated ${targetLang} code will appear here...`}
+                                options={{
+                                    minimap: { enabled: false },
+                                    fontSize: 14,
+                                    lineNumbers: 'on',
+                                    padding: { top: 16, bottom: 16 },
+                                    tabSize: 4,
+                                    readOnly: true,
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
