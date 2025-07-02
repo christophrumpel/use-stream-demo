@@ -16,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
         $middleware->validateCsrfTokens(except: [
-            'stream'
+            'stream',
+            'api/text-stream',
         ]);
 
         $middleware->web(append: [

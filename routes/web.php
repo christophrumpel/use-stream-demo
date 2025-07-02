@@ -18,7 +18,6 @@ Route::get('/editor', function () {
     return Inertia::render('editor');
 });
 
-
 function getPrompt(mixed $targetLang, mixed $code): string
 {
     return <<<EOT
@@ -62,6 +61,6 @@ Route::post('/stream', function () {
     return createStreamedResponse($stream);
 });
 
-
+require __DIR__ . '/demo-routes.php';
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
